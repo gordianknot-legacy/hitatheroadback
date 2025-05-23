@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome Home Hita! 💕</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-10px);
+            }
+            60% {
+                transform: translateY(-5px);
+            }
+        }
+
+        h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .section:hover {
+            transform: translateY(-5px);
+        }
+
+        .section h2 {
+            font-size: 2em;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #FFD700;
+        }
+
+        .countdown {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .countdown-item {
+            text-align: center;
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 15px;
+            min-width: 80px;
+        }
+
+        .countdown-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            display: block;
+            color: #FFD700;
+        }
+
+        .countdown-label {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .calendar-section {
+            text-align: center;
+        }
+
+        .calendar-button {
+            background: linear-gradient(45deg, #FF6B6B, #FF8E53);
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            color: white;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 15px;
+        }
+
+        .calendar-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(255,107,107,0.4);
+        }
+
+        .list-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .list-container {
+                grid-template-columns: 1fr;
+            }
+            .countdown {
+                gap: 10px;
+            }
+            h1 {
+                font-size: 2em;
+            }
+        }
+
+        .list-box {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 15px;
+            border-left: 5px solid #FFD700;
+        }
+
+        .list-box h3 {
+            color: #FFD700;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .list-item {
+            background: rgba(255,255,255,0.1);
+            margin: 10px 0;
+            padding: 12px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .list-item:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateX(5px);
+        }
+
+        .emoji {
+            font-size: 1.5em;
+            margin-right: 10px;
+        }
+
+        .message {
+            text-align: center;
+            font-size: 1.1em;
+            line-height: 1.6;
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+        }
+
+        .heart {
+            color: #FF69B4;
+            animation: heartbeat 1.5s ease-in-out infinite;
+        }
+
+        @keyframes heartbeat {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎉 Hita's Grand Return! 🎉</h1>
+            <p class="subtitle">Someone's been counting the seconds... literally! 😅</p>
+        </header>
+
+        <!-- COUNTDOWN SECTION -->
+        <div class="section">
+            <h2>⏰ Countdown to Happiness</h2>
+            <div class="countdown" id="countdown">
+                <div class="countdown-item">
+                    <span class="countdown-number" id="days">0</span>
+                    <span class="countdown-label">Days</span>
+                </div>
+                <div class="countdown-item">
+                    <span class="countdown-number" id="hours">0</span>
+                    <span class="countdown-label">Hours</span>
+                </div>
+                <div class="countdown-item">
+                    <span class="countdown-number" id="minutes">0</span>
+                    <span class="countdown-label">Minutes</span>
+                </div>
+                <div class="countdown-item">
+                    <span class="countdown-number" id="seconds">0</span>
+                    <span class="countdown-label">Seconds</span>
+                </div>
+            </div>
+            <div class="message">
+                <p>Until Hita arrives on <strong>May 29th at 1:10 PM</strong>!</p>
+                <p>Prepare for maximum cuddles and terrible jokes <span class="heart">💕</span></p>
+            </div>
+        </div>
+
+        <!-- BABY TIME SECTION -->
+        <div class="section">
+            <h2>👶 Baby Time Scheduler</h2>
+            <div class="calendar-section">
+                <p>Ready to claim some quality time? Click below to block my calendar for our special dates!</p>
+                <p style="margin: 15px 0; opacity: 0.9;">
+                    <em>"Warning: May include excessive giggling, snack breaks, and me pretending to understand your stories" 😘</em>
+                </p>
+                <!-- EDIT THIS LINK: Replace YOUR_CALENDAR_LINK with your actual Google Calendar scheduling link -->
+                <a href="https://calendar.google.com/calendar/appointments/schedules/YOUR_CALENDAR_LINK" class="calendar-button" target="_blank">
+                    📅 Book Our Baby Time!
+                </a>
+                <p style="margin-top: 15px; font-size: 0.9em; opacity: 0.8;">
+                    Pro tip: "Study session" is code for Netflix and snacks 🍿
+                </p>
+            </div>
+        </div>
+
+        <!-- READING/WATCHING LIST SECTION -->
+        <div class="section">
+            <h2>📚 Our To-Do List (That We'll Probably Procrastinate On)</h2>
+            <div class="list-container">
+                <div class="list-box">
+                    <h3>📖 Books to Read</h3>
+                    <!-- EDIT BOOKS HERE: Add or remove books in the div below -->
+                    <div class="list-item">
+                        <span class="emoji">🐕</span>
+                        <strong>How to Teach Quantum Physics to Your Dog</strong>
+                        <br><small>Because regular dog training wasn't confusing enough!</small>
+                    </div>
+                    <!-- TO ADD MORE BOOKS: Copy the div above and change the title -->
+                </div>
+                
+                <div class="list-box">
+                    <h3>🎬 Movies to Watch</h3>
+                    <!-- EDIT MOVIES HERE: Add or remove movies in the divs below -->
+                    <div class="list-item">
+                        <span class="emoji">🐕</span>
+                        <strong>Hachi</strong>
+                        <br><small>Prepare tissues for this one!</small>
+                    </div>
+                    <div class="list-item">
+                        <span class="emoji">🎭</span>
+                        <strong>777 Charlie</strong>
+                        <br><small>More dog movies = more tears</small>
+                    </div>
+                    <div class="list-item">
+                        <span class="emoji">🎪</span>
+                        <strong>The Reluctant Fundamentalist</strong>
+                        <br><small>The serious one in our lineup</small>
+                    </div>
+                    <!-- TO ADD MORE MOVIES: Copy a div above and change the details -->
+                </div>
+            </div>
+            <div class="message">
+                <p>Let's be honest... we'll probably end up rewatching The Office again <span class="heart">😂</span></p>
+            </div>
+        </div>
+
+        <!-- FOOTER MESSAGE -->
+        <div class="section">
+            <div class="message">
+                <h2 style="color: #FFD700; margin-bottom: 15px;">Welcome Home, Beautiful! 🏠</h2>
+                <p>This little corner of the internet is just a tiny reminder of how much you're missed and loved.</p>
+                <p style="margin-top: 15px;">
+                    Can't wait to hear all your stories, see your photos, and go back to our beautifully chaotic routine <span class="heart">💕</span>
+                </p>
+                <p style="margin-top: 15px; font-size: 1.2em;">
+                    <strong>Love you to the moon and back! 🌙✨</strong>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // COUNTDOWN TIMER SCRIPT
+        function updateCountdown() {
+            // EDIT DATE/TIME HERE: Change the date and time below
+            const targetDate = new Date('2025-05-29T13:10:00'); // May 29, 2025 at 1:10 PM
+            const now = new Date();
+            const difference = targetDate - now;
+
+            if (difference > 0) {
+                const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+
+                document.getElementById('days').textContent = days;
+                document.getElementById('hours').textContent = hours;
+                document.getElementById('minutes').textContent = minutes;
+                document.getElementById('seconds').textContent = seconds;
+            } else {
+                // EDIT CELEBRATION MESSAGE: Change what happens when countdown reaches zero
+                document.getElementById('countdown').innerHTML = `
+                    <div style="text-align: center; font-size: 2em; color: #FFD700;">
+                        🎉 SHE'S HERE! 🎉<br>
+                        <span style="font-size: 0.8em;">Time for celebration hugs!</span>
+                    </div>
+                `;
+            }
+        }
+
+        // Update countdown every second
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
+    </script>
+</body>
+</html>
