@@ -12,21 +12,28 @@
         }
 
         body {
-            font-family: 'Comic Sans MS', cursive, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             color: white;
+            line-height: 1.5;
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1000px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 40px 20px;
         }
 
         header {
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 48px;
+            padding: 32px 0;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             animation: bounce 2s infinite;
         }
 
@@ -43,63 +50,65 @@
         }
 
         h1 {
-            font-size: 3em;
-            margin-bottom: 10px;
+            font-size: 2.5em;
+            margin-bottom: 8px;
+            color: #FFD700;
+            font-weight: 700;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
 
         .subtitle {
-            font-size: 1.2em;
-            opacity: 0.9;
+            font-size: 1.1em;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 400;
         }
 
         .section {
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 30px;
-            margin-bottom: 30px;
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 24px;
             box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-            transition: transform 0.3s ease;
-        }
-
-        .section:hover {
-            transform: translateY(-5px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .section h2 {
-            font-size: 2em;
-            margin-bottom: 20px;
-            text-align: center;
+            font-size: 1.8em;
+            margin-bottom: 24px;
             color: #FFD700;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
         .countdown {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
         }
 
         .countdown-item {
             text-align: center;
-            background: rgba(255,255,255,0.2);
-            padding: 15px;
-            border-radius: 15px;
-            min-width: 80px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 20px 16px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
 
         .countdown-number {
-            font-size: 2.5em;
-            font-weight: bold;
+            font-size: 2.2em;
+            font-weight: 700;
             display: block;
             color: #FFD700;
         }
 
         .countdown-label {
             font-size: 0.9em;
-            opacity: 0.8;
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 4px;
         }
 
         .calendar-section {
@@ -109,28 +118,29 @@
         .calendar-button {
             background: linear-gradient(45deg, #FF6B6B, #FF8E53);
             border: none;
-            padding: 15px 30px;
+            padding: 12px 24px;
             border-radius: 50px;
             color: white;
-            font-size: 1.2em;
-            font-weight: bold;
+            font-size: 1em;
+            font-weight: 500;
             cursor: pointer;
             transition: all 0.3s ease;
             text-decoration: none;
             display: inline-block;
-            margin-top: 15px;
+            margin-top: 16px;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
         }
 
         .calendar-button:hover {
             transform: scale(1.05);
-            box-shadow: 0 5px 15px rgba(255,107,107,0.4);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
         }
 
         .list-container {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 30px;
-            margin-top: 20px;
+            gap: 32px;
+            margin-top: 24px;
         }
 
         @media (max-width: 768px) {
@@ -138,71 +148,201 @@
                 grid-template-columns: 1fr;
             }
             .countdown {
-                gap: 10px;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
             }
             h1 {
                 font-size: 2em;
             }
+            .container {
+                padding: 20px 12px;
+            }
         }
 
         .list-box {
-            background: rgba(255,255,255,0.1);
-            padding: 20px;
-            border-radius: 15px;
-            border-left: 5px solid #FFD700;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 24px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .list-box h3 {
             color: #FFD700;
-            margin-bottom: 15px;
-            font-size: 1.5em;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #FFD700, #FFA500);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .progress-text {
+            font-size: 0.85em;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 16px;
+            text-align: center;
         }
 
         .list-item {
-            background: rgba(255,255,255,0.1);
-            margin: 10px 0;
-            padding: 12px;
-            border-radius: 10px;
-            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            margin: 8px 0;
+            padding: 12px 16px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.2s ease;
         }
 
         .list-item:hover {
-            background: rgba(255,255,255,0.2);
-            transform: translateX(5px);
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
 
-        .emoji {
-            font-size: 1.5em;
-            margin-right: 10px;
+        .list-item.completed {
+            opacity: 0.6;
+            text-decoration: line-through;
+        }
+
+        .checkbox {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #FFD700;
+        }
+
+        .item-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .item-text {
+            flex: 1;
+            font-size: 0.95em;
+            color: white;
+        }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            color: #dc3545;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 1.1em;
+            opacity: 0;
+            transition: all 0.2s ease;
+        }
+
+        .list-item:hover .delete-btn {
+            opacity: 1;
+        }
+
+        .delete-btn:hover {
+            background: rgba(220, 53, 69, 0.2);
+        }
+
+        .add-item-container {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .add-input {
+            flex: 1;
+            padding: 10px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            font-size: 0.95em;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .add-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .add-input:focus {
+            outline: none;
+            border-color: #FFD700;
+            box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.2);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .add-btn {
+            background: linear-gradient(45deg, #FF6B6B, #FF8E53);
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            color: white;
+            font-size: 0.95em;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .add-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+        }
+
+        .add-btn:disabled {
+            background: rgba(255, 255, 255, 0.3);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
 
         .message {
             text-align: center;
-            font-size: 1.1em;
+            font-size: 1em;
             line-height: 1.6;
-            background: rgba(255,255,255,0.1);
+            background: rgba(255, 255, 255, 0.1);
             padding: 20px;
-            border-radius: 15px;
-            margin-top: 20px;
+            border-radius: 8px;
+            margin-top: 24px;
+            color: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
-        .heart {
-            color: #FF69B4;
-            animation: heartbeat 1.5s ease-in-out infinite;
+        .emoji {
+            font-size: 1.2em;
         }
 
-        @keyframes heartbeat {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85em;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 12px;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1> Hita's Coming! 🏃‍♀️‍➡️ </h1>
-            <p class="subtitle">Counting the seconds... literally! 😅</p>
+            <h1>🏃‍♀️ Hita's Coming!</h1>
+            <p class="subtitle">Counting down to happiness... literally! 😅</p>
         </header>
 
         <!-- COUNTDOWN SECTION -->
@@ -227,23 +367,22 @@
                 </div>
             </div>
             <div class="message">
-                <p>Prepare for maximum cuddles and terrible jokes <span class="heart">💕</span></p>
+                <p>Prepare for maximum cuddles and terrible jokes 💕</p>
             </div>
         </div>
 
-        <!-- BABY TIME SECTION -->
+        <!-- CALENDAR SECTION -->
         <div class="section">
-            <h2> Baby Time Scheduler</h2>
+            <h2>📅 Baby Time Scheduler</h2>
             <div class="calendar-section">
-                <p>Ready to claim some quality ninnu time? Click below to block my calendar!</p>
-                <p style="margin: 15px 0; opacity: 0.9;">
-                    <em>"Warning: May include excessive giggling, napping, snack breaks, and hanky panky" 😘</em>
+                <p>Ready to claim some quality time? Click below to block the calendar!</p>
+                <p style="margin: 15px 0; color: rgba(255, 255, 255, 0.8); font-style: italic;">
+                    "Warning: May include excessive giggling, napping, snack breaks, and hanky panky" 😘
                 </p>
-                <!-- EDIT THIS LINK: Replace YOUR_CALENDAR_LINK with your actual Google Calendar scheduling link -->
                 <a href="https://calendar.google.com/calendar/u/0/appointments/schedules/AcZssZ3v2m4QDvIk0GIa4bhGK87EV7ljRvgSm_0ii3Rj4ZiONWYyBfwsFJ5DoVN-rKN1bVGKrPeRMnUx" class="calendar-button" target="_blank">
-                    📅 Book Our Baby Time!
+                    📅 Book Our Time!
                 </a>
-                <p style="margin-top: 15px; font-size: 0.9em; opacity: 0.8;">
+                <p style="margin-top: 15px; font-size: 0.9em; color: rgba(255, 255, 255, 0.8);">
                     Pro tip: "Co-working session" is code for Netflix and snacks 🍿
                 </p>
             </div>
@@ -251,57 +390,80 @@
 
         <!-- READING/WATCHING LIST SECTION -->
         <div class="section">
-            <h2>📚 To-Do List (That We'll Probably Procrastinate On)</h2>
+            <h2>📚 Our Interactive To-Do Lists</h2>
             <div class="list-container">
                 <div class="list-box">
-                    <h3>📖 Books to Read</h3>
-                    <!-- EDIT BOOKS HERE: Add or remove books in the div below -->
-                    <div class="list-item">
-                        <span class="emoji">🐕</span>
-                        <strong>How to Teach Quantum Physics to Your Dog</strong>
+                    <h3>
+                        📖 Books to Read
+                        <span id="books-count" class="stats">0 items</span>
+                    </h3>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="books-progress"></div>
                     </div>
-                    <!-- TO ADD MORE BOOKS: Copy the div above and change the title -->
+                    <div class="progress-text" id="books-progress-text">0% completed</div>
+                    
+                    <div id="books-list">
+                        <!-- Books will be dynamically added here -->
+                    </div>
+                    
+                    <div class="add-item-container">
+                        <input type="text" id="book-input" class="add-input" placeholder="Add a book to read...">
+                        <button onclick="addBook()" class="add-btn" id="add-book-btn">Add Book</button>
+                    </div>
                 </div>
                 
                 <div class="list-box">
-                    <h3>🎬 Movies to Watch</h3>
-                    <!-- EDIT MOVIES HERE: Add or remove movies in the divs below -->
-                    <div class="list-item">
-                        <span class="emoji">🐕</span>
-                        <strong>Hachi</strong>
+                    <h3>
+                        🎬 Movies to Watch
+                        <span id="movies-count" class="stats">0 items</span>
+                    </h3>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="movies-progress"></div>
                     </div>
-                    <div class="list-item">
-                        <span class="emoji">🎭</span>
-                        <strong>777 Charlie</strong>
+                    <div class="progress-text" id="movies-progress-text">0% completed</div>
+                    
+                    <div id="movies-list">
+                        <!-- Movies will be dynamically added here -->
                     </div>
-                    <div class="list-item">
-                        <span class="emoji">🎪</span>
-                        <strong>The Reluctant Fundamentalist</strong>
+                    
+                    <div class="add-item-container">
+                        <input type="text" id="movie-input" class="add-input" placeholder="Add a movie to watch...">
+                        <button onclick="addMovie()" class="add-btn" id="add-movie-btn">Add Movie</button>
                     </div>
-                    <!-- TO ADD MORE MOVIES: Copy a div above and change the details -->
                 </div>
             </div>
             <div class="message">
-                <p>Let's be honest... we'll probably end up rewatching TBBT again <span class="heart">😂</span></p>
+                <p>Let's be honest... we'll probably end up rewatching TBBT again 😂</p>
             </div>
         </div>
 
         <!-- FOOTER MESSAGE -->
         <div class="section">
             <div class="message">
-                <h2 style="color: #FFD700; margin-bottom: 15px;">Wapas Aao 🏠</h2>
-                <p>This little corner of the internet is a kutty reminder of how much you're missed!</p>
-                <p style="margin-top: 15px; font-size: 1.2em;">
-                </p>
+                <h2 style="color: #FFD700; margin-bottom: 15px; font-size: 1.5em;">Wapas Aao 🏠</h2>
+                <p>This little corner of the internet is a reminder of how much you're missed!</p>
             </div>
         </div>
     </div>
 
     <script>
+        // Data storage
+        let books = [
+            { id: 1, title: "How to Teach Quantum Physics to Your Dog", emoji: "🐕", completed: false }
+        ];
+
+        let movies = [
+            { id: 1, title: "Hachi", emoji: "🐕", completed: false },
+            { id: 2, title: "777 Charlie", emoji: "🎭", completed: false },
+            { id: 3, title: "The Reluctant Fundamentalist", emoji: "🎪", completed: false }
+        ];
+
+        let nextBookId = 2;
+        let nextMovieId = 4;
+
         // COUNTDOWN TIMER SCRIPT
         function updateCountdown() {
-            // EDIT DATE/TIME HERE: Change the date and time below
-            const targetDate = new Date('2025-05-29T13:10:00'); // May 29, 2025 at 1:10 PM
+            const targetDate = new Date('2025-05-29T13:10:00');
             const now = new Date();
             const difference = targetDate - now;
 
@@ -316,9 +478,8 @@
                 document.getElementById('minutes').textContent = minutes;
                 document.getElementById('seconds').textContent = seconds;
             } else {
-                // EDIT CELEBRATION MESSAGE: Change what happens when countdown reaches zero
                 document.getElementById('countdown').innerHTML = `
-                    <div style="text-align: center; font-size: 2em; color: #FFD700;">
+                    <div style="text-align: center; font-size: 2em; color: #FFD700; grid-column: 1/-1;">
                         🎉 SHE'S HERE! 🎉<br>
                         <span style="font-size: 0.8em;">Time for celebration hugs!</span>
                     </div>
@@ -326,9 +487,154 @@
             }
         }
 
-        // Update countdown every second
+        // Book functions
+        function renderBooks() {
+            const booksList = document.getElementById('books-list');
+            const booksCount = document.getElementById('books-count');
+            const booksProgress = document.getElementById('books-progress');
+            const booksProgressText = document.getElementById('books-progress-text');
+
+            booksList.innerHTML = '';
+            
+            books.forEach(book => {
+                const bookElement = document.createElement('div');
+                bookElement.className = `list-item ${book.completed ? 'completed' : ''}`;
+                bookElement.innerHTML = `
+                    <input type="checkbox" class="checkbox" ${book.completed ? 'checked' : ''} 
+                           onchange="toggleBook(${book.id})">
+                    <div class="item-content">
+                        <span class="emoji">${book.emoji}</span>
+                        <span class="item-text">${book.title}</span>
+                    </div>
+                    <button class="delete-btn" onclick="deleteBook(${book.id})" title="Delete book">
+                        ×
+                    </button>
+                `;
+                booksList.appendChild(bookElement);
+            });
+
+            // Update stats
+            const completedBooks = books.filter(book => book.completed).length;
+            const totalBooks = books.length;
+            const percentage = totalBooks > 0 ? Math.round((completedBooks / totalBooks) * 100) : 0;
+
+            booksCount.textContent = `${totalBooks} items`;
+            booksProgress.style.width = `${percentage}%`;
+            booksProgressText.textContent = `${percentage}% completed (${completedBooks}/${totalBooks})`;
+        }
+
+        function addBook() {
+            const input = document.getElementById('book-input');
+            const title = input.value.trim();
+            
+            if (title) {
+                books.push({
+                    id: nextBookId++,
+                    title: title,
+                    emoji: '📖',
+                    completed: false
+                });
+                input.value = '';
+                renderBooks();
+            }
+        }
+
+        function deleteBook(id) {
+            books = books.filter(book => book.id !== id);
+            renderBooks();
+        }
+
+        function toggleBook(id) {
+            const book = books.find(book => book.id === id);
+            if (book) {
+                book.completed = !book.completed;
+                renderBooks();
+            }
+        }
+
+        // Movie functions
+        function renderMovies() {
+            const moviesList = document.getElementById('movies-list');
+            const moviesCount = document.getElementById('movies-count');
+            const moviesProgress = document.getElementById('movies-progress');
+            const moviesProgressText = document.getElementById('movies-progress-text');
+
+            moviesList.innerHTML = '';
+            
+            movies.forEach(movie => {
+                const movieElement = document.createElement('div');
+                movieElement.className = `list-item ${movie.completed ? 'completed' : ''}`;
+                movieElement.innerHTML = `
+                    <input type="checkbox" class="checkbox" ${movie.completed ? 'checked' : ''} 
+                           onchange="toggleMovie(${movie.id})">
+                    <div class="item-content">
+                        <span class="emoji">${movie.emoji}</span>
+                        <span class="item-text">${movie.title}</span>
+                    </div>
+                    <button class="delete-btn" onclick="deleteMovie(${movie.id})" title="Delete movie">
+                        ×
+                    </button>
+                `;
+                moviesList.appendChild(movieElement);
+            });
+
+            // Update stats
+            const completedMovies = movies.filter(movie => movie.completed).length;
+            const totalMovies = movies.length;
+            const percentage = totalMovies > 0 ? Math.round((completedMovies / totalMovies) * 100) : 0;
+
+            moviesCount.textContent = `${totalMovies} items`;
+            moviesProgress.style.width = `${percentage}%`;
+            moviesProgressText.textContent = `${percentage}% completed (${completedMovies}/${totalMovies})`;
+        }
+
+        function addMovie() {
+            const input = document.getElementById('movie-input');
+            const title = input.value.trim();
+            
+            if (title) {
+                movies.push({
+                    id: nextMovieId++,
+                    title: title,
+                    emoji: '🎬',
+                    completed: false
+                });
+                input.value = '';
+                renderMovies();
+            }
+        }
+
+        function deleteMovie(id) {
+            movies = movies.filter(movie => movie.id !== id);
+            renderMovies();
+        }
+
+        function toggleMovie(id) {
+            const movie = movies.find(movie => movie.id === id);
+            if (movie) {
+                movie.completed = !movie.completed;
+                renderMovies();
+            }
+        }
+
+        // Enter key support
+        document.getElementById('book-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addBook();
+            }
+        });
+
+        document.getElementById('movie-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addMovie();
+            }
+        });
+
+        // Initialize
         updateCountdown();
         setInterval(updateCountdown, 1000);
+        renderBooks();
+        renderMovies();
     </script>
 </body>
 </html>
