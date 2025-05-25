@@ -336,9 +336,52 @@
             color: rgba(255, 255, 255, 0.8);
             margin-bottom: 12px;
         }
+
+        .sync-notice {
+            background: rgba(34, 197, 94, 0.2);
+            border: 1px solid rgba(34, 197, 94, 0.4);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .sync-notice strong {
+            color: #22c55e;
+        }
+
+        .loading {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .status-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 500;
+            z-index: 1000;
+        }
+
+        .status-online {
+            background: rgba(34, 197, 94, 0.9);
+            color: white;
+        }
+
+        .status-offline {
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+        }
     </style>
 </head>
 <body>
+    <!-- Status Indicator -->
+    <div id="status-indicator" class="status-indicator status-offline">🔴 Connecting...</div>
+
     <div class="container">
         <header>
             <h1>Hita's Coming! 🏃‍♀️‍➡️</h1>
@@ -391,6 +434,11 @@
         <!-- READING/WATCHING LIST SECTION -->
         <div class="section">
             <h2>📚 Our To-Do Lists</h2>
+            
+            <div class="sync-notice">
+                <strong>🌐 Global Sync Active!</strong> All changes are automatically saved and synced across all devices in real-time.
+            </div>
+            
             <div class="list-container">
                 <div class="list-box">
                     <h3>
@@ -446,22 +494,297 @@
         </div>
     </div>
 
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Import Firebase modules
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, doc, onSnapshot, setDoc, deleteDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // TODO: Replace with your Firebase config
+     const firebaseConfig = {
+  apiKey: "AIzaSyAlLVyp5O8qRZDkC8Qq2KMpIM-dUwSWoHI",
+  authDomain: "hita-todo-lists.firebaseapp.com",
+  databaseURL: "https://hita-todo-lists-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "hita-todo-lists",
+  storageBucket: "hita-todo-lists.firebasestorage.app",
+  messagingSenderId: "554797950824",
+  appId: "1:554797950824:web:f425e05ecc2d955de898dd"
+};
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Global variables
+        let books = [];
+        let movies = [];
+        let nextBookId = 1;
+        let nextMovieId = 1;
+
+        // Status indicator
+        const statusIndicator = document.getElementById('status-indicator');
+
+        function updateStatus(online) {
+            if (online) {
+                statusIndicator.textContent = '🟢 Online & Synced';
+                statusIndicator.className = 'status-indicator status-online';
+            } else {
+                statusIndicator.textContent = '🔴 Offline';
+                statusIndicator.className = 'status-indicator status-offline';
+            }
+        }
+
+        // Real-time listeners for books
+        const booksRef = collection(db, 'books');
+        onSnapshot(booksRef, (snapshot) => {
+            books = [];
+            snapshot.forEach((doc) => {
+                books.push({ id: doc.id, ...doc.data() });
+            });
+            
+            // Update next ID
+            if (books.length > 0) {
+                nextBookId = Math.max(...books.map(book => parseInt(book.id))) + 1;
+            }
+            
+            renderBooks();
+            updateStatus(true);
+        }, (error) => {
+            console.error("Error listening to books:", error);
+            updateStatus(false);
+        });
+
+        // Real-time listeners for movies
+        const moviesRef = collection(db, 'movies');
+        onSnapshot(moviesRef, (snapshot) => {
+            movies = [];
+            snapshot.forEach((doc) => {
+                movies.push({ id: doc.id, ...doc.data() });
+            });
+            
+            // Update next ID
+            if (movies.length > 0) {
+                nextMovieId = Math.max(...movies.map(movie => parseInt(movie.id))) + 1;
+            }
+            
+            renderMovies();
+            updateStatus(true);
+        }, (error) => {
+            console.error("Error listening to movies:", error);
+            updateStatus(false);
+        });
+
+        // Book functions
+        function renderBooks() {
+            const booksList = document.getElementById('books-list');
+            const booksCount = document.getElementById('books-count');
+            const booksProgress = document.getElementById('books-progress');
+            const booksProgressText = document.getElementById('books-progress-text');
+
+            booksList.innerHTML = '';
+            
+            books.forEach(book => {
+                const bookElement = document.createElement('div');
+                bookElement.className = `list-item ${book.completed ? 'completed' : ''}`;
+                bookElement.innerHTML = `
+                    <input type="checkbox" class="checkbox" ${book.completed ? 'checked' : ''} 
+                           onchange="toggleBook('${book.id}')">
+                    <div class="item-content">
+                        <span class="emoji">${book.emoji}</span>
+                        <span class="item-text">${book.title}</span>
+                    </div>
+                    <button class="delete-btn" onclick="deleteBook('${book.id}')" title="Delete book">
+                        ×
+                    </button>
+                `;
+                booksList.appendChild(bookElement);
+            });
+
+            // Update stats
+            const completedBooks = books.filter(book => book.completed).length;
+            const totalBooks = books.length;
+            const percentage = totalBooks > 0 ? Math.round((completedBooks / totalBooks) * 100) : 0;
+
+            booksCount.textContent = `${totalBooks} items`;
+            booksProgress.style.width = `${percentage}%`;
+            booksProgressText.textContent = `${percentage}% completed (${completedBooks}/${totalBooks})`;
+        }
+
+        window.addBook = async function() {
+            const input = document.getElementById('book-input');
+            const title = input.value.trim();
+            
+            if (title) {
+                const bookId = nextBookId.toString();
+                try {
+                    await setDoc(doc(db, 'books', bookId), {
+                        title: title,
+                        emoji: '📖',
+                        completed: false,
+                        createdAt: new Date()
+                    });
+                    input.value = '';
+                    nextBookId++;
+                } catch (error) {
+                    console.error("Error adding book:", error);
+                    alert("Error adding book. Please try again.");
+                }
+            }
+        };
+
+        window.deleteBook = async function(id) {
+            try {
+                await deleteDoc(doc(db, 'books', id));
+            } catch (error) {
+                console.error("Error deleting book:", error);
+                alert("Error deleting book. Please try again.");
+            }
+        };
+
+        window.toggleBook = async function(id) {
+            const book = books.find(book => book.id === id);
+            if (book) {
+                try {
+                    await updateDoc(doc(db, 'books', id), {
+                        completed: !book.completed
+                    });
+                } catch (error) {
+                    console.error("Error updating book:", error);
+                    alert("Error updating book. Please try again.");
+                }
+            }
+        };
+
+        // Movie functions
+        function renderMovies() {
+            const moviesList = document.getElementById('movies-list');
+            const moviesCount = document.getElementById('movies-count');
+            const moviesProgress = document.getElementById('movies-progress');
+            const moviesProgressText = document.getElementById('movies-progress-text');
+
+            moviesList.innerHTML = '';
+            
+            movies.forEach(movie => {
+                const movieElement = document.createElement('div');
+                movieElement.className = `list-item ${movie.completed ? 'completed' : ''}`;
+                movieElement.innerHTML = `
+                    <input type="checkbox" class="checkbox" ${movie.completed ? 'checked' : ''} 
+                           onchange="toggleMovie('${movie.id}')">
+                    <div class="item-content">
+                        <span class="emoji">${movie.emoji}</span>
+                        <span class="item-text">${movie.title}</span>
+                    </div>
+                    <button class="delete-btn" onclick="deleteMovie('${movie.id}')" title="Delete movie">
+                        ×
+                    </button>
+                `;
+                moviesList.appendChild(movieElement);
+            });
+
+            // Update stats
+            const completedMovies = movies.filter(movie => movie.completed).length;
+            const totalMovies = movies.length;
+            const percentage = totalMovies > 0 ? Math.round((completedMovies / totalMovies) * 100) : 0;
+
+            moviesCount.textContent = `${totalMovies} items`;
+            moviesProgress.style.width = `${percentage}%`;
+            moviesProgressText.textContent = `${percentage}% completed (${completedMovies}/${totalMovies})`;
+        }
+
+        window.addMovie = async function() {
+            const input = document.getElementById('movie-input');
+            const title = input.value.trim();
+            
+            if (title) {
+                const movieId = nextMovieId.toString();
+                try {
+                    await setDoc(doc(db, 'movies', movieId), {
+                        title: title,
+                        emoji: '🎬',
+                        completed: false,
+                        createdAt: new Date()
+                    });
+                    input.value = '';
+                    nextMovieId++;
+                } catch (error) {
+                    console.error("Error adding movie:", error);
+                    alert("Error adding movie. Please try again.");
+                }
+            }
+        };
+
+        window.deleteMovie = async function(id) {
+            try {
+                await deleteDoc(doc(db, 'movies', id));
+            } catch (error) {
+                console.error("Error deleting movie:", error);
+                alert("Error deleting movie. Please try again.");
+            }
+        };
+
+        window.toggleMovie = async function(id) {
+            const movie = movies.find(movie => movie.id === id);
+            if (movie) {
+                try {
+                    await updateDoc(doc(db, 'movies', id), {
+                        completed: !movie.completed
+                    });
+                } catch (error) {
+                    console.error("Error updating movie:", error);
+                    alert("Error updating movie. Please try again.");
+                }
+            }
+        };
+
+        // Enter key support
+        document.getElementById('book-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addBook();
+            }
+        });
+
+        document.getElementById('movie-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addMovie();
+            }
+        });
+
+        // Initialize sample data if collections are empty
+        setTimeout(async () => {
+            if (books.length === 0) {
+                await setDoc(doc(db, 'books', '1'), {
+                    title: "How to Teach Quantum Physics to Your Dog",
+                    emoji: "🐕",
+                    completed: false,
+                    createdAt: new Date()
+                });
+            }
+            
+            if (movies.length === 0) {
+                await setDoc(doc(db, 'movies', '1'), {
+                    title: "Hachi",
+                    emoji: "🐕",
+                    completed: false,
+                    createdAt: new Date()
+                });
+                await setDoc(doc(db, 'movies', '2'), {
+                    title: "777 Charlie",
+                    emoji: "🎭",
+                    completed: false,
+                    createdAt: new Date()
+                });
+                await setDoc(doc(db, 'movies', '3'), {
+                    title: "The Reluctant Fundamentalist",
+                    emoji: "🎪",
+                    completed: false,
+                    createdAt: new Date()
+                });
+            }
+        }, 2000);
+    </script>
+
     <script>
-        // Data storage
-        let books = [
-            { id: 1, title: "How to Teach Quantum Physics to Your Dog", emoji: "🐕", completed: false }
-        ];
-
-        let movies = [
-            { id: 1, title: "Hachi", emoji: "🐕", completed: false },
-            { id: 2, title: "777 Charlie", emoji: "🎭", completed: false },
-            { id: 3, title: "The Reluctant Fundamentalist", emoji: "🎪", completed: false }
-        ];
-
-        let nextBookId = 2;
-        let nextMovieId = 4;
-
-        // COUNTDOWN TIMER SCRIPT
+        // COUNTDOWN TIMER SCRIPT (non-module)
         function updateCountdown() {
             const targetDate = new Date('2025-05-29T13:10:00');
             const now = new Date();
@@ -487,154 +810,9 @@
             }
         }
 
-        // Book functions
-        function renderBooks() {
-            const booksList = document.getElementById('books-list');
-            const booksCount = document.getElementById('books-count');
-            const booksProgress = document.getElementById('books-progress');
-            const booksProgressText = document.getElementById('books-progress-text');
-
-            booksList.innerHTML = '';
-            
-            books.forEach(book => {
-                const bookElement = document.createElement('div');
-                bookElement.className = `list-item ${book.completed ? 'completed' : ''}`;
-                bookElement.innerHTML = `
-                    <input type="checkbox" class="checkbox" ${book.completed ? 'checked' : ''} 
-                           onchange="toggleBook(${book.id})">
-                    <div class="item-content">
-                        <span class="emoji">${book.emoji}</span>
-                        <span class="item-text">${book.title}</span>
-                    </div>
-                    <button class="delete-btn" onclick="deleteBook(${book.id})" title="Delete book">
-                        ×
-                    </button>
-                `;
-                booksList.appendChild(bookElement);
-            });
-
-            // Update stats
-            const completedBooks = books.filter(book => book.completed).length;
-            const totalBooks = books.length;
-            const percentage = totalBooks > 0 ? Math.round((completedBooks / totalBooks) * 100) : 0;
-
-            booksCount.textContent = `${totalBooks} items`;
-            booksProgress.style.width = `${percentage}%`;
-            booksProgressText.textContent = `${percentage}% completed (${completedBooks}/${totalBooks})`;
-        }
-
-        function addBook() {
-            const input = document.getElementById('book-input');
-            const title = input.value.trim();
-            
-            if (title) {
-                books.push({
-                    id: nextBookId++,
-                    title: title,
-                    emoji: '📖',
-                    completed: false
-                });
-                input.value = '';
-                renderBooks();
-            }
-        }
-
-        function deleteBook(id) {
-            books = books.filter(book => book.id !== id);
-            renderBooks();
-        }
-
-        function toggleBook(id) {
-            const book = books.find(book => book.id === id);
-            if (book) {
-                book.completed = !book.completed;
-                renderBooks();
-            }
-        }
-
-        // Movie functions
-        function renderMovies() {
-            const moviesList = document.getElementById('movies-list');
-            const moviesCount = document.getElementById('movies-count');
-            const moviesProgress = document.getElementById('movies-progress');
-            const moviesProgressText = document.getElementById('movies-progress-text');
-
-            moviesList.innerHTML = '';
-            
-            movies.forEach(movie => {
-                const movieElement = document.createElement('div');
-                movieElement.className = `list-item ${movie.completed ? 'completed' : ''}`;
-                movieElement.innerHTML = `
-                    <input type="checkbox" class="checkbox" ${movie.completed ? 'checked' : ''} 
-                           onchange="toggleMovie(${movie.id})">
-                    <div class="item-content">
-                        <span class="emoji">${movie.emoji}</span>
-                        <span class="item-text">${movie.title}</span>
-                    </div>
-                    <button class="delete-btn" onclick="deleteMovie(${movie.id})" title="Delete movie">
-                        ×
-                    </button>
-                `;
-                moviesList.appendChild(movieElement);
-            });
-
-            // Update stats
-            const completedMovies = movies.filter(movie => movie.completed).length;
-            const totalMovies = movies.length;
-            const percentage = totalMovies > 0 ? Math.round((completedMovies / totalMovies) * 100) : 0;
-
-            moviesCount.textContent = `${totalMovies} items`;
-            moviesProgress.style.width = `${percentage}%`;
-            moviesProgressText.textContent = `${percentage}% completed (${completedMovies}/${totalMovies})`;
-        }
-
-        function addMovie() {
-            const input = document.getElementById('movie-input');
-            const title = input.value.trim();
-            
-            if (title) {
-                movies.push({
-                    id: nextMovieId++,
-                    title: title,
-                    emoji: '🎬',
-                    completed: false
-                });
-                input.value = '';
-                renderMovies();
-            }
-        }
-
-        function deleteMovie(id) {
-            movies = movies.filter(movie => movie.id !== id);
-            renderMovies();
-        }
-
-        function toggleMovie(id) {
-            const movie = movies.find(movie => movie.id === id);
-            if (movie) {
-                movie.completed = !movie.completed;
-                renderMovies();
-            }
-        }
-
-        // Enter key support
-        document.getElementById('book-input').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                addBook();
-            }
-        });
-
-        document.getElementById('movie-input').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                addMovie();
-            }
-        });
-
-        // Initialize
+        // Initialize countdown
         updateCountdown();
         setInterval(updateCountdown, 1000);
-        renderBooks();
-        renderMovies();
     </script>
 </body>
 </html>
