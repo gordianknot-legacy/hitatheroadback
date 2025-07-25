@@ -376,6 +376,16 @@
             background: rgba(239, 68, 68, 0.9);
             color: white;
         }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+        }
     </style>
 </head>
 <body>
@@ -435,6 +445,11 @@
         <div class="section">
             <h2>📚 Our To-Do Lists</h2>
             
+            <!-- Error message for Firebase issues -->
+            <div id="firebase-error" class="error-message" style="display: none;">
+                <strong>⚠️ Connection Issue:</strong> Unable to connect to the server. Lists will work locally but won't sync across devices.
+            </div>
+            
             <div class="list-container">
                 <div class="list-box">
                     <h3>
@@ -490,85 +505,55 @@
         </div>
     </div>
 
-    <!-- Firebase SDK -->
-    <script type="module">
-        // Import Firebase modules
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getFirestore, collection, doc, onSnapshot, setDoc, deleteDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-
-        // TODO: Replace with your Firebase config
-     const firebaseConfig = {
-  apiKey: "AIzaSyAlLVyp5O8qRZDkC8Qq2KMpIM-dUwSWoHI",
-  authDomain: "hita-todo-lists.firebaseapp.com",
-  databaseURL: "https://hita-todo-lists-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "hita-todo-lists",
-  storageBucket: "hita-todo-lists.firebasestorage.app",
-  messagingSenderId: "554797950824",
-  appId: "1:554797950824:web:f425e05ecc2d955de898dd"
-};
-
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        // Global variables
+    <script>
+        // Global variables for offline mode
         let books = [];
         let movies = [];
         let nextBookId = 1;
         let nextMovieId = 1;
+        let isOnline = false;
 
         // Status indicator
         const statusIndicator = document.getElementById('status-indicator');
+        const errorMessage = document.getElementById('firebase-error');
 
-        function updateStatus(online) {
+        function updateStatus(online, error = null) {
+            isOnline = online;
             if (online) {
                 statusIndicator.textContent = '🟢 Online & Synced';
                 statusIndicator.className = 'status-indicator status-online';
+                errorMessage.style.display = 'none';
             } else {
-                statusIndicator.textContent = '🔴 Offline';
+                statusIndicator.textContent = '🔴 Working Offline';
                 statusIndicator.className = 'status-indicator status-offline';
+                if (error) {
+                    errorMessage.style.display = 'block';
+                    console.error('Firebase Error:', error);
+                }
             }
         }
 
-        // Real-time listeners for books
-        const booksRef = collection(db, 'books');
-        onSnapshot(booksRef, (snapshot) => {
-            books = [];
-            snapshot.forEach((doc) => {
-                books.push({ id: doc.id, ...doc.data() });
-            });
+        // Initialize with sample data for offline mode
+        function initializeSampleData() {
+            if (books.length === 0) {
+                books = [
+                    { id: '1', title: 'How to Teach Quantum Physics to Your Dog', emoji: '🐕', completed: false }
+                ];
+                nextBookId = 2;
+            }
             
-            // Update next ID
-            if (books.length > 0) {
-                nextBookId = Math.max(...books.map(book => parseInt(book.id))) + 1;
+            if (movies.length === 0) {
+                movies = [
+                    { id: '1', title: 'Hachi', emoji: '🐕', completed: false },
+                    { id: '2', title: '777 Charlie', emoji: '🎭', completed: false },
+                    { id: '3', title: 'The Reluctant Fundamentalist', emoji: '🎪', completed: false }
+                ];
+                nextMovieId = 4;
             }
             
             renderBooks();
-            updateStatus(true);
-        }, (error) => {
-            console.error("Error listening to books:", error);
-            updateStatus(false);
-        });
-
-        // Real-time listeners for movies
-        const moviesRef = collection(db, 'movies');
-        onSnapshot(moviesRef, (snapshot) => {
-            movies = [];
-            snapshot.forEach((doc) => {
-                movies.push({ id: doc.id, ...doc.data() });
-            });
-            
-            // Update next ID
-            if (movies.length > 0) {
-                nextMovieId = Math.max(...movies.map(movie => parseInt(movie.id))) + 1;
-            }
-            
             renderMovies();
-            updateStatus(true);
-        }, (error) => {
-            console.error("Error listening to movies:", error);
-            updateStatus(false);
-        });
+        }
 
         // Book functions
         function renderBooks() {
@@ -586,7 +571,7 @@
                     <input type="checkbox" class="checkbox" ${book.completed ? 'checked' : ''} 
                            onchange="toggleBook('${book.id}')">
                     <div class="item-content">
-                        <span class="emoji">${book.emoji}</span>
+                        <span class="emoji">${book.emoji || '📖'}</span>
                         <span class="item-text">${book.title}</span>
                     </div>
                     <button class="delete-btn" onclick="deleteBook('${book.id}')" title="Delete book">
@@ -606,47 +591,51 @@
             booksProgressText.textContent = `${percentage}% completed (${completedBooks}/${totalBooks})`;
         }
 
-        window.addBook = async function() {
+        window.addBook = function() {
             const input = document.getElementById('book-input');
             const title = input.value.trim();
             
             if (title) {
                 const bookId = nextBookId.toString();
-                try {
-                    await setDoc(doc(db, 'books', bookId), {
-                        title: title,
-                        emoji: '📖',
-                        completed: false,
-                        createdAt: new Date()
-                    });
-                    input.value = '';
-                    nextBookId++;
-                } catch (error) {
-                    console.error("Error adding book:", error);
-                    alert("Error adding book. Please try again.");
+                const newBook = {
+                    id: bookId,
+                    title: title,
+                    emoji: '📖',
+                    completed: false,
+                    createdAt: new Date()
+                };
+                
+                books.push(newBook);
+                input.value = '';
+                nextBookId++;
+                renderBooks();
+                
+                // Try to sync with Firebase if online
+                if (isOnline) {
+                    syncBookWithFirebase(newBook);
                 }
             }
         };
 
-        window.deleteBook = async function(id) {
-            try {
-                await deleteDoc(doc(db, 'books', id));
-            } catch (error) {
-                console.error("Error deleting book:", error);
-                alert("Error deleting book. Please try again.");
+        window.deleteBook = function(id) {
+            books = books.filter(book => book.id !== id);
+            renderBooks();
+            
+            // Try to sync with Firebase if online
+            if (isOnline) {
+                deleteBookFromFirebase(id);
             }
         };
 
-        window.toggleBook = async function(id) {
+        window.toggleBook = function(id) {
             const book = books.find(book => book.id === id);
             if (book) {
-                try {
-                    await updateDoc(doc(db, 'books', id), {
-                        completed: !book.completed
-                    });
-                } catch (error) {
-                    console.error("Error updating book:", error);
-                    alert("Error updating book. Please try again.");
+                book.completed = !book.completed;
+                renderBooks();
+                
+                // Try to sync with Firebase if online
+                if (isOnline) {
+                    updateBookInFirebase(book);
                 }
             }
         };
@@ -667,7 +656,7 @@
                     <input type="checkbox" class="checkbox" ${movie.completed ? 'checked' : ''} 
                            onchange="toggleMovie('${movie.id}')">
                     <div class="item-content">
-                        <span class="emoji">${movie.emoji}</span>
+                        <span class="emoji">${movie.emoji || '🎬'}</span>
                         <span class="item-text">${movie.title}</span>
                     </div>
                     <button class="delete-btn" onclick="deleteMovie('${movie.id}')" title="Delete movie">
@@ -687,50 +676,199 @@
             moviesProgressText.textContent = `${percentage}% completed (${completedMovies}/${totalMovies})`;
         }
 
-        window.addMovie = async function() {
+        window.addMovie = function() {
             const input = document.getElementById('movie-input');
             const title = input.value.trim();
             
             if (title) {
                 const movieId = nextMovieId.toString();
-                try {
-                    await setDoc(doc(db, 'movies', movieId), {
-                        title: title,
-                        emoji: '🎬',
-                        completed: false,
-                        createdAt: new Date()
-                    });
-                    input.value = '';
-                    nextMovieId++;
-                } catch (error) {
-                    console.error("Error adding movie:", error);
-                    alert("Error adding movie. Please try again.");
+                const newMovie = {
+                    id: movieId,
+                    title: title,
+                    emoji: '🎬',
+                    completed: false,
+                    createdAt: new Date()
+                };
+                
+                movies.push(newMovie);
+                input.value = '';
+                nextMovieId++;
+                renderMovies();
+                
+                // Try to sync with Firebase if online
+                if (isOnline) {
+                    syncMovieWithFirebase(newMovie);
                 }
             }
         };
 
-        window.deleteMovie = async function(id) {
-            try {
-                await deleteDoc(doc(db, 'movies', id));
-            } catch (error) {
-                console.error("Error deleting movie:", error);
-                alert("Error deleting movie. Please try again.");
+        window.deleteMovie = function(id) {
+            movies = movies.filter(movie => movie.id !== id);
+            renderMovies();
+            
+            // Try to sync with Firebase if online
+            if (isOnline) {
+                deleteMovieFromFirebase(id);
             }
         };
 
-        window.toggleMovie = async function(id) {
+        window.toggleMovie = function(id) {
             const movie = movies.find(movie => movie.id === id);
             if (movie) {
-                try {
-                    await updateDoc(doc(db, 'movies', id), {
-                        completed: !movie.completed
-                    });
-                } catch (error) {
-                    console.error("Error updating movie:", error);
-                    alert("Error updating movie. Please try again.");
+                movie.completed = !movie.completed;
+                renderMovies();
+                
+                // Try to sync with Firebase if online
+                if (isOnline) {
+                    updateMovieInFirebase(movie);
                 }
             }
         };
+
+        // Placeholder Firebase sync functions (these would connect to your actual Firebase)
+        function syncBookWithFirebase(book) {
+            // This would sync with Firebase when online
+            console.log('Would sync book with Firebase:', book);
+        }
+
+        function deleteBookFromFirebase(id) {
+            console.log('Would delete book from Firebase:', id);
+        }
+
+        function updateBookInFirebase(book) {
+            console.log('Would update book in Firebase:', book);
+        }
+
+        function syncMovieWithFirebase(movie) {
+            console.log('Would sync movie with Firebase:', movie);
+        }
+
+        function deleteMovieFromFirebase(id) {
+            console.log('Would delete movie from Firebase:', id);
+        }
+
+        function updateMovieInFirebase(movie) {
+            console.log('Would update movie in Firebase:', movie);
+        }
+
+        // Try to initialize Firebase connection
+        async function initializeFirebase() {
+            try {
+                // Try to load Firebase
+                const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
+                const { getFirestore, collection, doc, onSnapshot, setDoc, deleteDoc, updateDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+                const firebaseConfig = {
+                    apiKey: "AIzaSyAlLVyp5O8qRZDkC8Qq2KMpIM-dUwSWoHI",
+                    authDomain: "hita-todo-lists.firebaseapp.com",
+                    databaseURL: "https://hita-todo-lists-default-rtdb.asia-southeast1.firebasedatabase.app",
+                    projectId: "hita-todo-lists",
+                    storageBucket: "hita-todo-lists.firebasestorage.app",
+                    messagingSenderId: "554797950824",
+                    appId: "1:554797950824:web:f425e05ecc2d955de898dd"
+                };
+
+                const app = initializeApp(firebaseConfig);
+                const db = getFirestore(app);
+
+                // Set up real-time listeners
+                const booksRef = collection(db, 'books');
+                onSnapshot(booksRef, (snapshot) => {
+                    books = [];
+                    snapshot.forEach((doc) => {
+                        books.push({ id: doc.id, ...doc.data() });
+                    });
+                    
+                    if (books.length > 0) {
+                        nextBookId = Math.max(...books.map(book => parseInt(book.id))) + 1;
+                    }
+                    
+                    renderBooks();
+                    updateStatus(true);
+                }, (error) => {
+                    console.error("Error listening to books:", error);
+                    updateStatus(false, error);
+                    initializeSampleData();
+                });
+
+                const moviesRef = collection(db, 'movies');
+                onSnapshot(moviesRef, (snapshot) => {
+                    movies = [];
+                    snapshot.forEach((doc) => {
+                        movies.push({ id: doc.id, ...doc.data() });
+                    });
+                    
+                    if (movies.length > 0) {
+                        nextMovieId = Math.max(...movies.map(movie => parseInt(movie.id))) + 1;
+                    }
+                    
+                    renderMovies();
+                    updateStatus(true);
+                }, (error) => {
+                    console.error("Error listening to movies:", error);
+                    updateStatus(false, error);
+                    initializeSampleData();
+                });
+
+                // Update sync functions to use actual Firebase
+                syncBookWithFirebase = async (book) => {
+                    try {
+                        await setDoc(doc(db, 'books', book.id), book);
+                    } catch (error) {
+                        console.error("Error syncing book:", error);
+                    }
+                };
+
+                deleteBookFromFirebase = async (id) => {
+                    try {
+                        await deleteDoc(doc(db, 'books', id));
+                    } catch (error) {
+                        console.error("Error deleting book:", error);
+                    }
+                };
+
+                updateBookInFirebase = async (book) => {
+                    try {
+                        await updateDoc(doc(db, 'books', book.id), {
+                            completed: book.completed
+                        });
+                    } catch (error) {
+                        console.error("Error updating book:", error);
+                    }
+                };
+
+                syncMovieWithFirebase = async (movie) => {
+                    try {
+                        await setDoc(doc(db, 'movies', movie.id), movie);
+                    } catch (error) {
+                        console.error("Error syncing movie:", error);
+                    }
+                };
+
+                deleteMovieFromFirebase = async (id) => {
+                    try {
+                        await deleteDoc(doc(db, 'movies', id));
+                    } catch (error) {
+                        console.error("Error deleting movie:", error);
+                    }
+                };
+
+                updateMovieInFirebase = async (movie) => {
+                    try {
+                        await updateDoc(doc(db, 'movies', movie.id), {
+                            completed: movie.completed
+                        });
+                    } catch (error) {
+                        console.error("Error updating movie:", error);
+                    }
+                };
+
+            } catch (error) {
+                console.error("Firebase initialization failed:", error);
+                updateStatus(false, error);
+                initializeSampleData();
+            }
+        }
 
         // Enter key support
         document.getElementById('book-input').addEventListener('keypress', function(e) {
@@ -745,42 +883,16 @@
             }
         });
 
-        // Initialize sample data if collections are empty
-        setTimeout(async () => {
-            if (books.length === 0) {
-                await setDoc(doc(db, 'books', '1'), {
-                    title: "How to Teach Quantum Physics to Your Dog",
-                    emoji: "🐕",
-                    completed: false,
-                    createdAt: new Date()
-                });
-            }
-            
-            if (movies.length === 0) {
-                await setDoc(doc(db, 'movies', '1'), {
-                    title: "Hachi",
-                    emoji: "🐕",
-                    completed: false,
-                    createdAt: new Date()
-                });
-                await setDoc(doc(db, 'movies', '2'), {
-                    title: "777 Charlie",
-                    emoji: "🎭",
-                    completed: false,
-                    createdAt: new Date()
-                });
-                await setDoc(doc(db, 'movies', '3'), {
-                    title: "The Reluctant Fundamentalist",
-                    emoji: "🎪",
-                    completed: false,
-                    createdAt: new Date()
-                });
-            }
-        }, 2000);
-    </script>
+        // Initialize the app
+        updateStatus(false);
+        initializeSampleData();
+        
+        // Try to connect to Firebase after a short delay
+        setTimeout(() => {
+            initializeFirebase();
+        }, 1000);
 
-    <script>
-        // COUNTDOWN TIMER SCRIPT (non-module)
+        // COUNTDOWN TIMER SCRIPT
         function updateCountdown() {
             const targetDate = new Date('2025-05-29T13:10:00');
             const now = new Date();
