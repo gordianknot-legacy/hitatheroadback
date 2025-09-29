@@ -45,7 +45,7 @@
             animation: bounce 2s infinite;
         }
 
- @keyframes bounce {
+        @keyframes bounce {
             0%, 20%, 50%, 80%, 100% {
                 transform: translateY(0);
             }
@@ -377,6 +377,11 @@
             color: white;
         }
 
+        .status-connecting {
+            background: rgba(249, 115, 22, 0.9);
+            color: white;
+        }
+
         .error-message {
             background: rgba(239, 68, 68, 0.2);
             border: 1px solid rgba(239, 68, 68, 0.4);
@@ -386,11 +391,22 @@
             margin-bottom: 20px;
             font-size: 0.9em;
         }
+
+        .debug-info {
+            background: rgba(59, 130, 246, 0.2);
+            border: 1px solid rgba(59, 130, 246, 0.4);
+            color: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.8em;
+            font-family: monospace;
+        }
     </style>
 </head>
 <body>
     <!-- Status Indicator -->
-    <div id="status-indicator" class="status-indicator status-offline">🔴 Connecting...</div>
+    <div id="status-indicator" class="status-indicator status-connecting">🟡 Connecting...</div>
 
     <div class="container">
         <header>
@@ -445,9 +461,15 @@
         <div class="section">
             <h2>📚 Our To-Do Lists</h2>
             
+            <!-- Debug info -->
+            <div id="debug-info" class="debug-info" style="display: none;">
+                <strong>Debug Info:</strong><br>
+                <span id="debug-text">Initializing...</span>
+            </div>
+            
             <!-- Error message for Firebase issues -->
             <div id="firebase-error" class="error-message" style="display: none;">
-                <strong>⚠️ Connection Issue:</strong> Unable to connect to the server. Lists will work locally but won't sync across devices.
+                <strong>⚠️ Connection Issue:</strong> <span id="error-details">Unable to connect to the server. Lists will work locally but won't sync across devices.</span>
             </div>
             
             <div class="list-container">
@@ -505,36 +527,62 @@
         </div>
     </div>
 
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
     <script>
-        // Global variables for offline mode
+        // Global variables
         let books = [];
         let movies = [];
         let nextBookId = 1;
         let nextMovieId = 1;
         let isOnline = false;
+        let db = null;
+        let debugMode = true; // Set to false in production
 
-        // Status indicator
+        // DOM elements
         const statusIndicator = document.getElementById('status-indicator');
         const errorMessage = document.getElementById('firebase-error');
+        const errorDetails = document.getElementById('error-details');
+        const debugInfo = document.getElementById('debug-info');
+        const debugText = document.getElementById('debug-text');
+
+        function log(message) {
+            console.log(message);
+            if (debugMode) {
+                debugInfo.style.display = 'block';
+                debugText.innerHTML += '<br>' + message;
+            }
+        }
 
         function updateStatus(online, error = null) {
             isOnline = online;
+            
             if (online) {
                 statusIndicator.textContent = '🟢 Online & Synced';
                 statusIndicator.className = 'status-indicator status-online';
                 errorMessage.style.display = 'none';
-            } else {
-                statusIndicator.textContent = '🔴 Working Offline';
+                log('Status: Connected to Firebase');
+            } else if (error) {
+                statusIndicator.textContent = '🔴 Connection Failed';
                 statusIndicator.className = 'status-indicator status-offline';
-                if (error) {
-                    errorMessage.style.display = 'block';
-                    console.error('Firebase Error:', error);
-                }
+                errorMessage.style.display = 'block';
+                errorDetails.textContent = `Failed to connect: ${error.message || error}`;
+                log(`Status: Firebase connection failed - ${error.message || error}`);
+            } else {
+                statusIndicator.textContent = '🟡 Working Offline';
+                statusIndicator.className = 'status-indicator status-offline';
+                errorMessage.style.display = 'block';
+                errorDetails.textContent = 'Working in offline mode. Data will not sync across devices.';
+                log('Status: Working offline');
             }
         }
 
-        // Initialize with sample data for offline mode
+        // Initialize with sample data
         function initializeSampleData() {
+            log('Initializing sample data...');
+            
             if (books.length === 0) {
                 books = [
                     { id: '1', title: 'How to Teach Quantum Physics to Your Dog', emoji: '🐕', completed: false }
@@ -553,6 +601,126 @@
             
             renderBooks();
             renderMovies();
+            log('Sample data loaded');
+        }
+
+        // Firebase initialization
+        function initializeFirebase() {
+            log('Starting Firebase initialization...');
+            
+            try {
+                // Firebase configuration
+                const firebaseConfig = {
+                    apiKey: "AIzaSyAlLVyp5O8qRZDkC8Qq2KMpIM-dUwSWoHI",
+                    authDomain: "hita-todo-lists.firebaseapp.com",
+                    databaseURL: "https://hita-todo-lists-default-rtdb.asia-southeast1.firebasedatabase.app",
+                    projectId: "hita-todo-lists",
+                    storageBucket: "hita-todo-lists.firebasestorage.app",
+                    messagingSenderId: "554797950824",
+                    appId: "1:554797950824:web:f425e05ecc2d955de898dd"
+                };
+
+                log('Firebase config loaded');
+
+                // Initialize Firebase
+                firebase.initializeApp(firebaseConfig);
+                db = firebase.firestore();
+                
+                log('Firebase app initialized');
+
+                // Test connection by trying to read data
+                testFirebaseConnection();
+
+            } catch (error) {
+                log(`Firebase initialization error: ${error.message}`);
+                updateStatus(false, error);
+                initializeSampleData();
+            }
+        }
+
+        async function testFirebaseConnection() {
+            log('Testing Firebase connection...');
+            
+            try {
+                // Try to read books collection
+                const booksSnapshot = await db.collection('books').limit(1).get();
+                log(`Books test query successful. Empty: ${booksSnapshot.empty}`);
+                
+                // Try to read movies collection  
+                const moviesSnapshot = await db.collection('movies').limit(1).get();
+                log(`Movies test query successful. Empty: ${moviesSnapshot.empty}`);
+                
+                // If we get here, connection is working
+                setupFirebaseListeners();
+                updateStatus(true);
+                
+            } catch (error) {
+                log(`Firebase connection test failed: ${error.message}`);
+                updateStatus(false, error);
+                initializeSampleData();
+            }
+        }
+
+        function setupFirebaseListeners() {
+            log('Setting up Firebase listeners...');
+            
+            try {
+                // Books listener
+                db.collection('books').onSnapshot((snapshot) => {
+                    log(`Books snapshot received. Size: ${snapshot.size}`);
+                    
+                    books = [];
+                    snapshot.forEach((doc) => {
+                        books.push({ id: doc.id, ...doc.data() });
+                    });
+                    
+                    if (books.length > 0) {
+                        const maxId = Math.max(...books.map(book => parseInt(book.id) || 0));
+                        nextBookId = maxId + 1;
+                    }
+                    
+                    renderBooks();
+                    if (!isOnline) {
+                        updateStatus(true);
+                    }
+                }, (error) => {
+                    log(`Books listener error: ${error.message}`);
+                    updateStatus(false, error);
+                    if (books.length === 0) {
+                        initializeSampleData();
+                    }
+                });
+
+                // Movies listener
+                db.collection('movies').onSnapshot((snapshot) => {
+                    log(`Movies snapshot received. Size: ${snapshot.size}`);
+                    
+                    movies = [];
+                    snapshot.forEach((doc) => {
+                        movies.push({ id: doc.id, ...doc.data() });
+                    });
+                    
+                    if (movies.length > 0) {
+                        const maxId = Math.max(...movies.map(movie => parseInt(movie.id) || 0));
+                        nextMovieId = maxId + 1;
+                    }
+                    
+                    renderMovies();
+                }, (error) => {
+                    log(`Movies listener error: ${error.message}`);
+                    updateStatus(false, error);
+                    if (movies.length === 0) {
+                        initializeSampleData();
+                    }
+                });
+                
+                log('Firebase listeners set up successfully');
+                
+            } catch (error) {
+                log(`Error setting up listeners: ${error.message}`);
+                updateStatus(false, error);
+                initializeSampleData();
+            }
         }
 
         // Book functions
@@ -591,7 +759,7 @@
             booksProgressText.textContent = `${percentage}% completed (${completedBooks}/${totalBooks})`;
         }
 
-        window.addBook = function() {
+        window.addBook = async function() {
             const input = document.getElementById('book-input');
             const title = input.value.trim();
             
@@ -605,37 +773,56 @@
                     createdAt: new Date()
                 };
                 
+                // Add locally first
                 books.push(newBook);
-                input.value = '';
                 nextBookId++;
                 renderBooks();
+                input.value = '';
                 
-                // Try to sync with Firebase if online
-                if (isOnline) {
-                    syncBookWithFirebase(newBook);
+                // Sync with Firebase if online
+                if (isOnline && db) {
+                    try {
+                        await db.collection('books').doc(bookId).set(newBook);
+                        log(`Book added to Firebase: ${title}`);
+                    } catch (error) {
+                        log(`Error adding book to Firebase: ${error.message}`);
+                    }
                 }
             }
         };
 
-        window.deleteBook = function(id) {
+        window.deleteBook = async function(id) {
+            // Remove locally first
             books = books.filter(book => book.id !== id);
             renderBooks();
             
-            // Try to sync with Firebase if online
-            if (isOnline) {
-                deleteBookFromFirebase(id);
+            // Sync with Firebase if online
+            if (isOnline && db) {
+                try {
+                    await db.collection('books').doc(id).delete();
+                    log(`Book deleted from Firebase: ${id}`);
+                } catch (error) {
+                    log(`Error deleting book from Firebase: ${error.message}`);
+                }
             }
         };
 
-        window.toggleBook = function(id) {
+        window.toggleBook = async function(id) {
             const book = books.find(book => book.id === id);
             if (book) {
                 book.completed = !book.completed;
                 renderBooks();
                 
-                // Try to sync with Firebase if online
-                if (isOnline) {
-                    updateBookInFirebase(book);
+                // Sync with Firebase if online
+                if (isOnline && db) {
+                    try {
+                        await db.collection('books').doc(id).update({
+                            completed: book.completed
+                        });
+                        log(`Book updated in Firebase: ${id}`);
+                    } catch (error) {
+                        log(`Error updating book in Firebase: ${error.message}`);
+                    }
                 }
             }
         };
@@ -676,7 +863,7 @@
             moviesProgressText.textContent = `${percentage}% completed (${completedMovies}/${totalMovies})`;
         }
 
-        window.addMovie = function() {
+        window.addMovie = async function() {
             const input = document.getElementById('movie-input');
             const title = input.value.trim();
             
@@ -690,185 +877,59 @@
                     createdAt: new Date()
                 };
                 
+                // Add locally first
                 movies.push(newMovie);
-                input.value = '';
                 nextMovieId++;
                 renderMovies();
+                input.value = '';
                 
-                // Try to sync with Firebase if online
-                if (isOnline) {
-                    syncMovieWithFirebase(newMovie);
+                // Sync with Firebase if online
+                if (isOnline && db) {
+                    try {
+                        await db.collection('movies').doc(movieId).set(newMovie);
+                        log(`Movie added to Firebase: ${title}`);
+                    } catch (error) {
+                        log(`Error adding movie to Firebase: ${error.message}`);
+                    }
                 }
             }
         };
 
-        window.deleteMovie = function(id) {
+        window.deleteMovie = async function(id) {
+            // Remove locally first
             movies = movies.filter(movie => movie.id !== id);
             renderMovies();
             
-            // Try to sync with Firebase if online
-            if (isOnline) {
-                deleteMovieFromFirebase(id);
+            // Sync with Firebase if online
+            if (isOnline && db) {
+                try {
+                    await db.collection('movies').doc(id).delete();
+                    log(`Movie deleted from Firebase: ${id}`);
+                } catch (error) {
+                    log(`Error deleting movie from Firebase: ${error.message}`);
+                }
             }
         };
 
-        window.toggleMovie = function(id) {
+        window.toggleMovie = async function(id) {
             const movie = movies.find(movie => movie.id === id);
             if (movie) {
                 movie.completed = !movie.completed;
                 renderMovies();
                 
-                // Try to sync with Firebase if online
-                if (isOnline) {
-                    updateMovieInFirebase(movie);
+                // Sync with Firebase if online
+                if (isOnline && db) {
+                    try {
+                        await db.collection('movies').doc(id).update({
+                            completed: movie.completed
+                        });
+                        log(`Movie updated in Firebase: ${id}`);
+                    } catch (error) {
+                        log(`Error updating movie in Firebase: ${error.message}`);
+                    }
                 }
             }
         };
-
-        // Placeholder Firebase sync functions (these would connect to your actual Firebase)
-        function syncBookWithFirebase(book) {
-            // This would sync with Firebase when online
-            console.log('Would sync book with Firebase:', book);
-        }
-
-        function deleteBookFromFirebase(id) {
-            console.log('Would delete book from Firebase:', id);
-        }
-
-        function updateBookInFirebase(book) {
-            console.log('Would update book in Firebase:', book);
-        }
-
-        function syncMovieWithFirebase(movie) {
-            console.log('Would sync movie with Firebase:', movie);
-        }
-
-        function deleteMovieFromFirebase(id) {
-            console.log('Would delete movie from Firebase:', id);
-        }
-
-        function updateMovieInFirebase(movie) {
-            console.log('Would update movie in Firebase:', movie);
-        }
-
-        // Try to initialize Firebase connection
-        async function initializeFirebase() {
-            try {
-                // Try to load Firebase
-                const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
-                const { getFirestore, collection, doc, onSnapshot, setDoc, deleteDoc, updateDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
-
-                const firebaseConfig = {
-                    apiKey: "AIzaSyAlLVyp5O8qRZDkC8Qq2KMpIM-dUwSWoHI",
-                    authDomain: "hita-todo-lists.firebaseapp.com",
-                    databaseURL: "https://hita-todo-lists-default-rtdb.asia-southeast1.firebasedatabase.app",
-                    projectId: "hita-todo-lists",
-                    storageBucket: "hita-todo-lists.firebasestorage.app",
-                    messagingSenderId: "554797950824",
-                    appId: "1:554797950824:web:f425e05ecc2d955de898dd"
-                };
-
-                const app = initializeApp(firebaseConfig);
-                const db = getFirestore(app);
-
-                // Set up real-time listeners
-                const booksRef = collection(db, 'books');
-                onSnapshot(booksRef, (snapshot) => {
-                    books = [];
-                    snapshot.forEach((doc) => {
-                        books.push({ id: doc.id, ...doc.data() });
-                    });
-                    
-                    if (books.length > 0) {
-                        nextBookId = Math.max(...books.map(book => parseInt(book.id))) + 1;
-                    }
-                    
-                    renderBooks();
-                    updateStatus(true);
-                }, (error) => {
-                    console.error("Error listening to books:", error);
-                    updateStatus(false, error);
-                    initializeSampleData();
-                });
-
-                const moviesRef = collection(db, 'movies');
-                onSnapshot(moviesRef, (snapshot) => {
-                    movies = [];
-                    snapshot.forEach((doc) => {
-                        movies.push({ id: doc.id, ...doc.data() });
-                    });
-                    
-                    if (movies.length > 0) {
-                        nextMovieId = Math.max(...movies.map(movie => parseInt(movie.id))) + 1;
-                    }
-                    
-                    renderMovies();
-                    updateStatus(true);
-                }, (error) => {
-                    console.error("Error listening to movies:", error);
-                    updateStatus(false, error);
-                    initializeSampleData();
-                });
-
-                // Update sync functions to use actual Firebase
-                syncBookWithFirebase = async (book) => {
-                    try {
-                        await setDoc(doc(db, 'books', book.id), book);
-                    } catch (error) {
-                        console.error("Error syncing book:", error);
-                    }
-                };
-
-                deleteBookFromFirebase = async (id) => {
-                    try {
-                        await deleteDoc(doc(db, 'books', id));
-                    } catch (error) {
-                        console.error("Error deleting book:", error);
-                    }
-                };
-
-                updateBookInFirebase = async (book) => {
-                    try {
-                        await updateDoc(doc(db, 'books', book.id), {
-                            completed: book.completed
-                        });
-                    } catch (error) {
-                        console.error("Error updating book:", error);
-                    }
-                };
-
-                syncMovieWithFirebase = async (movie) => {
-                    try {
-                        await setDoc(doc(db, 'movies', movie.id), movie);
-                    } catch (error) {
-                        console.error("Error syncing movie:", error);
-                    }
-                };
-
-                deleteMovieFromFirebase = async (id) => {
-                    try {
-                        await deleteDoc(doc(db, 'movies', id));
-                    } catch (error) {
-                        console.error("Error deleting movie:", error);
-                    }
-                };
-
-                updateMovieInFirebase = async (movie) => {
-                    try {
-                        await updateDoc(doc(db, 'movies', movie.id), {
-                            completed: movie.completed
-                        });
-                    } catch (error) {
-                        console.error("Error updating movie:", error);
-                    }
-                };
-
-            } catch (error) {
-                console.error("Firebase initialization failed:", error);
-                updateStatus(false, error);
-                initializeSampleData();
-            }
-        }
 
         // Enter key support
         document.getElementById('book-input').addEventListener('keypress', function(e) {
@@ -883,16 +944,7 @@
             }
         });
 
-        // Initialize the app
-        updateStatus(false);
-        initializeSampleData();
-        
-        // Try to connect to Firebase after a short delay
-        setTimeout(() => {
-            initializeFirebase();
-        }, 1000);
-
-        // COUNTDOWN TIMER SCRIPT
+        // COUNTDOWN TIMER
         function updateCountdown() {
             const targetDate = new Date('2025-05-29T13:10:00');
             const now = new Date();
@@ -918,9 +970,21 @@
             }
         }
 
-        // Initialize countdown
+        // Initialize everything
+        log('App starting...');
+        updateStatus(false);
+        initializeSampleData();
         updateCountdown();
         setInterval(updateCountdown, 1000);
+        
+        // Initialize Firebase after DOM is ready
+        if (typeof firebase !== 'undefined') {
+            log('Firebase SDK loaded, initializing...');
+            initializeFirebase();
+        } else {
+            log('Firebase SDK not loaded');
+            updateStatus(false, new Error('Firebase SDK not loaded'));
+        }
     </script>
 </body>
 </html>
