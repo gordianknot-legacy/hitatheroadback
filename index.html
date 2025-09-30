@@ -347,6 +347,37 @@ h1 {
     color: #1A237E;
 }
 
+.list-box #books-list,
+.list-box #movies-list {
+    max-height: 480px; /* Approximately 6 items (6 × 80px per item) */
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 8px;
+}
+
+/* Custom scrollbar styling for a cleaner look */
+.list-box #books-list::-webkit-scrollbar,
+.list-box #movies-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.list-box #books-list::-webkit-scrollbar-track,
+.list-box #movies-list::-webkit-scrollbar-track {
+    background: rgba(187, 222, 251, 0.3);
+    border-radius: 4px;
+}
+
+.list-box #books-list::-webkit-scrollbar-thumb,
+.list-box #movies-list::-webkit-scrollbar-thumb {
+    background: rgba(144, 202, 249, 0.6);
+    border-radius: 4px;
+}
+
+.list-box #books-list::-webkit-scrollbar-thumb:hover,
+.list-box #movies-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(100, 181, 246, 0.8);
+}
+        
         .delete-btn {
             background: none;
             border: none;
@@ -1101,6 +1132,7 @@ h1 {
     </script>
 </body>
 </html>
+
 
 
 
